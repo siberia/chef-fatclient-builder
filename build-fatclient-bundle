@@ -1,0 +1,67 @@
+#!/bin/bash
+#
+# Builds the Joyent-style Chef Fatclient installer
+#
+# Copyright (c) 2013 Jacques Marneweck.  All rights reserved.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+if [[ "$1" == "-v" ]]; then
+    shift;
+    export PS4='[\D{%FT%TZ}] ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+    set -o xtrace
+fi
+set -o errexit
+set -o pipefail
+
+RUBY_VERSION=1.9.3
+RUBY_PATCH_LEVEL=448
+
+if [[ $(cat /.image_manifest.json | json pkgsrc.arch) == "i386" ]]; then
+  ARCH=32
+else
+  ARCH=64
+fi
+
+cd /var/tmp
+wget ftp://ftp.ruby-lang.org/pub/ruby/$(echo $RUBY_VERSION | cut -c1-3)/ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}.tar.bz2
+gtar -jxf ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}.tar.bz2
+
+cd ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}
+if [[ $ARCH -eq 32 ]]; then
+  ./configure 'CFLAGS=-m32 -std=gnu99' 'CXXFLAGS=-m32' 'LDFLAGS=-m32' --prefix=/opt/chef --disable-install-doc --disable-install-capi --with-opt-dir=/opt/local
+else
+  ./configure 'CFLAGS=-m64 -std=gnu99' 'CXXFLAGS=-m64' 'LDFLAGS=-m64' --prefix=/opt/chef --disable-install-doc --disable-install-capi --with-opt-dir=/opt/local
+fi
+
+make
+make install
+/opt/chef/bin/gem install chef
+
+#
+# Apply local patches not yet in upstream opscode ohai
+#
+cd /opt/chef/lib/ruby/gems/1.9.1/gems/ohai-6.18.0/lib/ohai/plugins/solaris2/
+patch -p0 < /var/tmp/chef-fatclient-builder/patches/ohai-lib-ohai-plugins-solaris2-hostname.rb.patch
+
+#
+# Build the tarball
+#
+CHEF_VERSION=$(/opt/chef/bin/gem list chef | grep "^chef" | cut -c7-12)
+cd /
+gtar -jcf /var/tmp/Chef-fatclient-${CHEF_VERSION}.tar.bz2 /opt/chef
