@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/local/bin/bash
 #
 # Builds the Joyent-style Chef Fatclient installer
 #
