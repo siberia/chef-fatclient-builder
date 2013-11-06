@@ -65,7 +65,7 @@ make install
 # Now build ruby
 #
 cd ${BUILD_BASE}
-if [[ ! -f /var/tmp/ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}.tar.bz2 ]]; then
+if [[ ! -f ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}.tar.bz2 ]]; then
   wget ftp://ftp.ruby-lang.org/pub/ruby/$(echo $RUBY_VERSION | cut -c1-3)/ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}.tar.bz2
   gtar -jxf ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}.tar.bz2
 fi
