@@ -29,8 +29,11 @@ fi
 set -o errexit
 set -o pipefail
 
+BUILD_BASE=/var/tmp/fatclient
 RUBY_VERSION=1.9.3
 RUBY_PATCH_LEVEL=448
+GEMS_RUBY_VERSION=1.9.1
+LIBYAML_VERSION=0.1.4
 
 if [[ $(cat /.image_manifest.json | json pkgsrc.arch) == "i386" ]]; then
   ARCH=32
@@ -39,20 +42,39 @@ else
 fi
 
 #
-# Make sure we have libyaml installed
+# Building under ${BUILD_BASE} at present
 #
-pkgin -yf up
-pkgin -y in libyaml
+if [[ ! -d ${BUILD_BASE} ]]; then
+  mkdir ${BUILD_BASE}
+fi
 
-cd /var/tmp
-wget ftp://ftp.ruby-lang.org/pub/ruby/$(echo $RUBY_VERSION | cut -c1-3)/ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}.tar.bz2
-gtar -jxf ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}.tar.bz2
+#
+# Start with building libyaml (needed for pysch for ruby yaml support)
+#
+cd ${BUILD_BASE}
+if [[ ! -f yaml-${LIBYAML_VERSION}.tar.gz ]]; then
+  wget http://pyyaml.org/download/libyaml/yaml-${LIBYAML_VERSION}.tar.gz
+  gtar -zxf yaml-${LIBYAML_VERSION}.tar.gz
+fi
+
+cd yaml-0.1.4
+./configure --prefix=/opt/chef
+make install
+
+#
+# Now build ruby
+#
+cd ${BUILD_BASE}
+if [[ ! -f /var/tmp/ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}.tar.bz2 ]]; then
+  wget ftp://ftp.ruby-lang.org/pub/ruby/$(echo $RUBY_VERSION | cut -c1-3)/ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}.tar.bz2
+  gtar -jxf ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}.tar.bz2
+fi
 
 cd ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}
 if [[ $ARCH -eq 32 ]]; then
-  ./configure 'CFLAGS=-m32 -std=gnu99' 'CXXFLAGS=-m32' 'LDFLAGS=-m32' --prefix=/opt/chef --disable-install-doc --disable-install-capi --with-opt-dir=/opt/local
+  ./configure 'CFLAGS=-m32 -std=gnu99' 'CXXFLAGS=-m32' 'LDFLAGS=-m32' --prefix=/opt/chef --disable-install-doc --disable-install-capi --with-opt-dir=/opt/chef/lib
 else
-  ./configure 'CFLAGS=-m64 -std=gnu99' 'CXXFLAGS=-m64' 'LDFLAGS=-m64' --prefix=/opt/chef --disable-install-doc --disable-install-capi --with-opt-dir=/opt/local
+  ./configure 'CFLAGS=-m64 -std=gnu99' 'CXXFLAGS=-m64' 'LDFLAGS=-m64' --prefix=/opt/chef --disable-install-doc --disable-install-capi --with-opt-dir=/opt/chef/lib
 fi
 
 make
@@ -62,7 +84,8 @@ make install
 #
 # Apply local patches not yet in upstream opscode ohai
 #
-cd /opt/chef/lib/ruby/gems/1.9.1/gems/ohai-6.18.0/lib/ohai/plugins/solaris2/
+OHAI_VERSION=$(/opt/chef/bin/gem list ohai | grep "^ohai" | cut -c7-12)
+cd /opt/chef/lib/ruby/gems/${RUBY_VERSION}/gems/${OHAI_VERSION}/lib/ohai/plugins/solaris2/
 patch -p0 < /var/tmp/chef-fatclient-builder/patches/ohai-lib-ohai-plugins-solaris2-hostname.rb.patch
 
 #
