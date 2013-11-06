@@ -38,6 +38,12 @@ else
   ARCH=64
 fi
 
+#
+# Make sure we have libyaml installed
+#
+pkgin -yf up
+pkgin -y in libyaml
+
 cd /var/tmp
 wget ftp://ftp.ruby-lang.org/pub/ruby/$(echo $RUBY_VERSION | cut -c1-3)/ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}.tar.bz2
 gtar -jxf ruby-${RUBY_VERSION}-p${RUBY_PATCH_LEVEL}.tar.bz2
