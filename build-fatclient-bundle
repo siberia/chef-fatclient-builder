@@ -85,12 +85,12 @@ make install
 # Apply local patches not yet in upstream opscode ohai
 #
 OHAI_VERSION=$(/opt/chef/bin/gem list ohai | grep "^ohai" | cut -c7-12)
-cd /opt/chef/lib/ruby/gems/${GEMS_RUBY_VERSION}/gems/${OHAI_VERSION}/lib/ohai/plugins/solaris2/
+cd /opt/chef/lib/ruby/gems/${GEMS_RUBY_VERSION}/gems/ohai-${OHAI_VERSION}/lib/ohai/plugins/solaris2/
 patch -p0 < /var/tmp/chef-fatclient-builder/patches/ohai-lib-ohai-plugins-solaris2-hostname.rb.patch
 
 #
 # Build the tarball
 #
-CHEF_VERSION=$(/opt/chef/bin/gem list chef | grep "^chef" | cut -c7-12)
+CHEF_VERSION=$(/opt/chef/bin/gem list chef | grep "^chef" | grep -v "^chef " | cut -c7-12)
 cd /
 gtar -jcf /var/tmp/Chef-fatclient-${CHEF_VERSION}.tar.bz2 /opt/chef
