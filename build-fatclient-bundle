@@ -35,10 +35,12 @@ RUBY_PATCH_LEVEL=448
 GEMS_RUBY_VERSION=1.9.1
 LIBYAML_VERSION=0.1.4
 
-if [[ $(cat /.image_manifest.json | json pkgsrc.arch) == "i386" ]]; then
+if [[ $(cat /etc/pkgsrc_version  | grep architecture | cut -d' ' -f 2) == "i386" ]]; then
   ARCH=32
+  FATCLIENT_ARCH=i386
 else
   ARCH=64
+  FATCLIENT_ARCH=x86_64
 fi
 
 #
@@ -93,4 +95,4 @@ patch -p0 < /var/tmp/chef-fatclient-builder/patches/ohai-lib-ohai-plugins-solari
 #
 CHEF_VERSION=$(/opt/chef/bin/gem list chef | grep "^chef " | cut -c7-12)
 cd /
-gtar -jcf /var/tmp/Chef-fatclient-${CHEF_VERSION}.tar.bz2 /opt/chef
+gtar -jcf /var/tmp/Chef-fatclient-${CHEF_VERSION}-${FATCLIENT_ARCH}.tar.bz2 /opt/chef
