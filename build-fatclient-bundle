@@ -84,6 +84,11 @@ make install
 /opt/chef/bin/gem install chef --no-ri --no-rdoc
 
 #
+# Install knife-solo_data_bag for dealing with data_bags with Chef Solo better
+#
+/opt/chef/bin/gem install knife-solo_data_bag
+
+#
 # Apply local patches not yet in upstream opscode ohai
 #
 OHAI_VERSION=$(/opt/chef/bin/gem list ohai | grep "^ohai" | cut -c7-12)
