@@ -98,6 +98,6 @@ patch -p0 < /var/tmp/chef-fatclient-builder/patches/ohai-lib-ohai-plugins-solari
 #
 # Build the tarball
 #
-CHEF_VERSION=$(/opt/chef/bin/gem list chef | grep "^chef " | cut -c7-12)
+CHEF_VERSION=$(/opt/chef/bin/gem list chef | grep "^chef " | cut -c7- | gsed -e '/)/s/)//g')
 cd /
 gtar -jcf /var/tmp/Chef-fatclient-${CHEF_VERSION}-${FATCLIENT_ARCH}.tar.bz2 /opt/chef
