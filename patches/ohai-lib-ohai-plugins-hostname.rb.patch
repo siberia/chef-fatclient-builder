@@ -1,0 +1,13 @@
+--- hostname.rb.orig	2014-04-13 22:01:39.058236818 +0000
++++ hostname.rb	2014-04-13 22:34:56.575111358 +0000
+@@ -139,8 +139,8 @@
+ 
+   collect_data(:solaris2) do
+     machinename from_cmd("hostname")
+-    hostname from_cmd("hostname")
+-    fqdn resolve_fqdn
++    hostname from_cmd("hostname").split(".")[0]
++    fqdn from_cmd("hostname")
+     domain collect_domain
+   end
+ 
