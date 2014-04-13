@@ -10,6 +10,15 @@ to use the Joyent Operations-style Chef Fatclient on a daily basis.  This script
 builds a version of Ruby 1.9.3 and with the latest version of Chef, Ohai and the
 knife-solo_data_bag which is useful when using chef-solo.
 
+Pre-flight
+----------
+
+Ensure that you have gcc47 and gmake installed.
+
+```
+pkgin in gcc47 gmake
+```
+
 Process
 -------
 
